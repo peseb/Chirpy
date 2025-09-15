@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 func main() {
 	serveMux := http.NewServeMux()
@@ -11,5 +14,5 @@ func main() {
 
 	fileHandler := http.FileServer(http.Dir("."))
 	serveMux.Handle("/", fileHandler)
-	server.ListenAndServe()
+	log.Fatal(server.ListenAndServe())
 }
