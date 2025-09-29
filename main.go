@@ -36,18 +36,30 @@ func main() {
 		Addr:    ":8080",
 	}
 
+	// File/App routes
 	fileHandler := http.FileServer(http.Dir("."))
 	serveMux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app", fileHandler)))
-	serveMux.HandleFunc("GET /healthz", handlerHealth)
-	serveMux.HandleFunc("GET /metrics", cfg.handlerMetrics)
-	serveMux.HandleFunc("POST /reset", cfg.handlerReset)
+
+	// Api routes
+	serveMux.HandleFunc("GET /api/healthz", handlerHealth)
+
+	// Admin routes
+	serveMux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
+	serveMux.HandleFunc("POST /admin/reset", cfg.handlerReset)
 	log.Fatal(server.ListenAndServe())
 }
 
 func (cfg *apiConfig) handlerMetrics(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	rw.Header().Add("Content-Type", "text/html; charset=utf-8")
 	rw.WriteHeader(http.StatusOK)
-	res := fmt.Sprintf("Hits: %v", cfg.getMetrics())
+
+	template := `<html>
+					<body>
+						<h1>Welcome, Chirpy Admin</h1>
+						<p>Chirpy has been visited %d times!</p>
+					</body>
+				</html>`
+	res := fmt.Sprintf(template, cfg.getMetrics())
 	rw.Write([]byte(res))
 }
 
