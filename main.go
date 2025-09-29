@@ -87,31 +87,17 @@ func handlerValidate(rw http.ResponseWriter, req *http.Request) {
 	dto := validateDto{}
 	err := decoder.Decode(&dto)
 	if err != nil {
-		generateResponse(rw, 400, "Unable to decode DTO")
+		respondWithError(rw, 400, "Unable to decode DTO", err)
 		return
 	}
 
 	if len(dto.Body) > 140 {
-		generateResponse(rw, 400, "Chirp is too long")
+		respondWithError(rw, 400, "Chirp is too long", nil)
 		return
 	}
 
-	generateResponse(rw, 200, "")
-}
-
-func generateResponse(rw http.ResponseWriter, code int, message string) {
 	type validateResultDto struct {
-		Error string `json:"error"`
-		Valid bool   `json:"valid"`
+		Valid bool `json:"valid"`
 	}
-
-	rw.Header().Add("Content-Type", "text/json; charset=utf-8")
-	rw.WriteHeader(code)
-
-	res := validateResultDto{
-		Error: message,
-		Valid: code == 200,
-	}
-	dat, _ := json.Marshal(res)
-	rw.Write([]byte(dat))
+	respondWithJSON(rw, 200, validateResultDto{Valid: true})
 }
