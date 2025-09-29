@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -42,6 +43,7 @@ func main() {
 
 	// Api routes
 	serveMux.HandleFunc("GET /api/healthz", handlerHealth)
+	serveMux.HandleFunc("POST /api/validate_chirp", handlerValidate)
 
 	// Admin routes
 	serveMux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
@@ -74,4 +76,42 @@ func handlerHealth(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	rw.WriteHeader(200)
 	rw.Write([]byte("OK"))
+}
+
+func handlerValidate(rw http.ResponseWriter, req *http.Request) {
+	type validateDto struct {
+		Body string `json:"body"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	dto := validateDto{}
+	err := decoder.Decode(&dto)
+	if err != nil {
+		generateResponse(rw, 400, "Unable to decode DTO")
+		return
+	}
+
+	if len(dto.Body) > 140 {
+		generateResponse(rw, 400, "Chirp is too long")
+		return
+	}
+
+	generateResponse(rw, 200, "")
+}
+
+func generateResponse(rw http.ResponseWriter, code int, message string) {
+	type validateResultDto struct {
+		Error string `json:"error"`
+		Valid bool   `json:"valid"`
+	}
+
+	rw.Header().Add("Content-Type", "text/json; charset=utf-8")
+	rw.WriteHeader(code)
+
+	res := validateResultDto{
+		Error: message,
+		Valid: code == 200,
+	}
+	dat, _ := json.Marshal(res)
+	rw.Write([]byte(dat))
 }
