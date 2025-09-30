@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 	"sync/atomic"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/peseb/Chirpy/internal/database"
@@ -61,6 +63,7 @@ func main() {
 	// Api routes
 	serveMux.HandleFunc("GET /api/healthz", handlerHealth)
 	serveMux.HandleFunc("POST /api/validate_chirp", handlerValidate)
+	serveMux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
 
 	// Admin routes
 	serveMux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
@@ -104,7 +107,7 @@ func handlerValidate(rw http.ResponseWriter, req *http.Request) {
 	dto := validateDto{}
 	err := decoder.Decode(&dto)
 	if err != nil {
-		respondWithError(rw, 400, "Unable to decode DTO", err)
+		respondWithError(rw, 500, "Unable to decode DTO", err)
 		return
 	}
 
@@ -118,4 +121,37 @@ func handlerValidate(rw http.ResponseWriter, req *http.Request) {
 	}
 	cleanedBody := cleanInput(dto.Body)
 	respondWithJSON(rw, 200, validateResultDto{CleanedBody: cleanedBody})
+}
+
+func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Request) {
+	type createUserDto struct {
+		Email string `json:"email"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	dto := createUserDto{}
+	err := decoder.Decode(&dto)
+	if err != nil {
+		respondWithError(rw, 500, "Unable to decode DTO", err)
+		return
+	}
+
+	user, err := cfg.db.CreateUser(req.Context(), dto.Email)
+	if err != nil {
+		respondWithError(rw, 500, "Unable to create user", err)
+		return
+	}
+
+	type userDto struct {
+		Id        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Email     string    `json:"email"`
+	}
+	respondWithJSON(rw, 201, userDto{
+		Id:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	})
 }
