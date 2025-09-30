@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"slices"
-	"strings"
 )
 
 func respondWithError(rw http.ResponseWriter, code int, msg string, err error) {
@@ -34,26 +32,4 @@ func respondWithJSON(rw http.ResponseWriter, code int, payload interface{}) {
 
 	rw.WriteHeader(code)
 	rw.Write(dat)
-}
-
-func cleanInput(input string) string {
-	parts := strings.Split(input, " ")
-	invalidWords := []string{"kerfuffle", "sharbert", "fornax"}
-
-	result := ""
-	for _, word := range parts {
-		newWord := word
-		lowered := strings.ToLower(word)
-		if slices.Contains(invalidWords, lowered) {
-			newWord = "****"
-		}
-
-		separator := " "
-		if len(result) == 0 {
-			separator = ""
-		}
-		result = strings.Join([]string{result, newWord}, separator)
-	}
-
-	return result
 }
