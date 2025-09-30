@@ -97,7 +97,8 @@ func handlerValidate(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	type validateResultDto struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
-	respondWithJSON(rw, 200, validateResultDto{Valid: true})
+	cleanedBody := cleanInput(dto.Body)
+	respondWithJSON(rw, 200, validateResultDto{CleanedBody: cleanedBody})
 }
