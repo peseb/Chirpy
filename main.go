@@ -19,6 +19,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
+	platform       string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -48,6 +49,7 @@ func main() {
 	cfg := apiConfig{
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
+		platform:       "dev",
 	}
 
 	serveMux := http.NewServeMux()
@@ -86,7 +88,14 @@ func (cfg *apiConfig) handlerMetrics(rw http.ResponseWriter, req *http.Request) 
 }
 
 func (cfg *apiConfig) handlerReset(rw http.ResponseWriter, req *http.Request) {
+	if cfg.platform != "dev" {
+		respondWithError(rw, 403, "Forbidden endpoint", nil)
+		return
+	}
+
 	cfg.resetMetrics()
+	cfg.db.DeleteUsers(req.Context())
+
 	rw.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte(http.StatusText(http.StatusOK)))
