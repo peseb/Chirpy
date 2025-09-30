@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,8 +61,12 @@ func main() {
 
 	// Api routes
 	serveMux.HandleFunc("GET /api/healthz", handlerHealth)
-	serveMux.HandleFunc("POST /api/validate_chirp", handlerValidate)
 	serveMux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
+
+	/*
+		Chirps
+	*/
+	serveMux.HandleFunc("POST /api/chirps", cfg.handlerCreateChirp)
 
 	// Admin routes
 	serveMux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
@@ -103,29 +106,4 @@ func handlerHealth(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	rw.WriteHeader(200)
 	rw.Write([]byte("OK"))
-}
-
-func handlerValidate(rw http.ResponseWriter, req *http.Request) {
-	type validateDto struct {
-		Body string `json:"body"`
-	}
-
-	decoder := json.NewDecoder(req.Body)
-	dto := validateDto{}
-	err := decoder.Decode(&dto)
-	if err != nil {
-		respondWithError(rw, 500, "Unable to decode DTO", err)
-		return
-	}
-
-	if len(dto.Body) > 140 {
-		respondWithError(rw, 400, "Chirp is too long", nil)
-		return
-	}
-
-	type validateResultDto struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
-	cleanedBody := cleanInput(dto.Body)
-	respondWithJSON(rw, 200, validateResultDto{CleanedBody: cleanedBody})
 }
