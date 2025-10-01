@@ -68,6 +68,7 @@ func main() {
 	*/
 	serveMux.HandleFunc("POST /api/chirps", cfg.handlerCreateChirp)
 	serveMux.HandleFunc("GET /api/chirps", cfg.handlerGetChirps)
+	serveMux.HandleFunc("GET /api/chirps/{id}", cfg.handlerGetChirp)
 
 	// Admin routes
 	serveMux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
