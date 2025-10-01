@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/peseb/Chirpy/internal/auth"
+	"github.com/peseb/Chirpy/internal/database"
 )
 
 type UserDto struct {
@@ -17,7 +19,8 @@ type UserDto struct {
 
 func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -27,8 +30,16 @@ func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Reques
 		respondWithError(rw, 500, "Unable to decode DTO", err)
 		return
 	}
+	hashed_password, err := auth.HashPassword(dto.Password)
+	if err != nil {
+		respondWithError(rw, 500, "Unable to hash password", err)
+		return
+	}
 
-	user, err := cfg.db.CreateUser(req.Context(), dto.Email)
+	user, err := cfg.db.CreateUser(req.Context(), database.CreateUserParams{
+		Email:          dto.Email,
+		HashedPassword: hashed_password,
+	})
 	if err != nil {
 		respondWithError(rw, 500, "Unable to create user", err)
 		return
