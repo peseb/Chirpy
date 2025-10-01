@@ -61,6 +61,10 @@ func main() {
 
 	// Api routes
 	serveMux.HandleFunc("GET /api/healthz", handlerHealth)
+
+	/*
+		Users
+	*/
 	serveMux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
 
 	/*
