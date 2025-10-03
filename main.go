@@ -66,6 +66,7 @@ func main() {
 		Users
 	*/
 	serveMux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
+	serveMux.HandleFunc("POST /api/login", cfg.handlerLogin)
 
 	/*
 		Chirps
