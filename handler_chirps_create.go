@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/peseb/Chirpy/internal/auth"
 	"github.com/peseb/Chirpy/internal/database"
 )
 
@@ -20,14 +21,25 @@ type ChirpDto struct {
 }
 
 func (cfg *apiConfig) handlerCreateChirp(rw http.ResponseWriter, req *http.Request) {
+	token, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		respondWithError(rw, 401, "Unauthorized", err)
+		return
+	}
+
+	userId, err := auth.ValidateJWT(token, cfg.authSecret)
+	if err != nil {
+		respondWithError(rw, 401, "Unauthorized", err)
+		return
+	}
+
 	type parameters struct {
-		Body   string    `json:"body"`
-		UserId uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
 	dto := parameters{}
-	err := decoder.Decode(&dto)
+	err = decoder.Decode(&dto)
 	if err != nil {
 		respondWithError(rw, 500, "Unable to decode DTO", err)
 		return
@@ -41,7 +53,7 @@ func (cfg *apiConfig) handlerCreateChirp(rw http.ResponseWriter, req *http.Reque
 	cleanedBody := cleanInput(dto.Body)
 	chirp, err := cfg.db.CreateChirp(req.Context(), database.CreateChirpParams{
 		Body:   cleanedBody,
-		UserID: dto.UserId,
+		UserID: userId,
 	})
 	if err != nil {
 		respondWithError(rw, 500, "Unable to create chirp", err)
