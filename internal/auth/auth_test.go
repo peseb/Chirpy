@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -72,5 +74,39 @@ func TestExpiredJWT(t *testing.T) {
 
 	if jwtUserId == userId {
 		t.Errorf("userId was returned on invalid token")
+	}
+}
+
+func TestGetBearerToken(t *testing.T) {
+	correctValue := "secretToken"
+	headers := http.Header{
+		"Authorization": {fmt.Sprintf("Bearer %s", correctValue)},
+	}
+	res, err := GetBearerToken(headers)
+	if err != nil {
+		t.Errorf("unable to get token from headers")
+	}
+
+	if res != correctValue {
+		t.Errorf("header was incorrect. was: %s; expected %s", res, correctValue)
+	}
+}
+
+func TestGetBearerToken_InvalidHeader(t *testing.T) {
+	correctValue := "secretToken"
+	headers := http.Header{
+		"Authorization": {fmt.Sprintf("Bearwithme %s", correctValue)},
+	}
+	_, err := GetBearerToken(headers)
+	if err == nil {
+		t.Errorf("header was invalid but received no err")
+	}
+}
+
+func TestGetBearerToken_NoHeader(t *testing.T) {
+	headers := http.Header{}
+	_, err := GetBearerToken(headers)
+	if err == nil {
+		t.Errorf("header was invalid but received no err")
 	}
 }
