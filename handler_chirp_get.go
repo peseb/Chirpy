@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -9,7 +8,6 @@ import (
 
 func (cfg *apiConfig) handlerGetChirp(rw http.ResponseWriter, req *http.Request) {
 	id := req.PathValue("id")
-	fmt.Printf("ID: %s\n", id)
 	parsedId, err := uuid.Parse(id)
 
 	if err != nil {
