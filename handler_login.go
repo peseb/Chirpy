@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/peseb/Chirpy/internal/auth"
+	"github.com/peseb/Chirpy/internal/database"
 )
 
 func (cfg *apiConfig) handlerLogin(rw http.ResponseWriter, req *http.Request) {
 	type parameters struct {
-		Email     string `json:"email"`
-		Password  string `json:"password"`
-		ExpiresIn int    `json:"expires_in_seconds"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -40,22 +40,35 @@ func (cfg *apiConfig) handlerLogin(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	expiresIn := dto.ExpiresIn
-	if expiresIn == 0 || expiresIn > 3600 {
-		expiresIn = 3600
+	duration := 3600 * time.Second
+	access_token, err := auth.MakeJWT(user.ID, cfg.authSecret, duration)
+	if err != nil {
+		respondWithError(rw, 401, "Incorrect email or password", err)
+		return
 	}
-	duration := time.Duration(expiresIn) * time.Second
-	token, err := auth.MakeJWT(user.ID, cfg.authSecret, duration)
+
+	refresh_token, err := auth.MakeRefreshToken()
+	if err != nil {
+		respondWithError(rw, 401, "Incorrect email or password", err)
+		return
+	}
+
+	db_token, err := cfg.db.CreateRefreshToken(req.Context(), database.CreateRefreshTokenParams{
+		Token:     refresh_token,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(24 * 60 * time.Hour),
+	})
 	if err != nil {
 		respondWithError(rw, 401, "Incorrect email or password", err)
 		return
 	}
 
 	respondWithJSON(rw, 200, UserDto{
-		Id:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     token,
+		Id:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        access_token,
+		RefreshToken: db_token.Token,
 	})
 }
