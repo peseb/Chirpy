@@ -40,7 +40,7 @@ func (cfg *apiConfig) handlerLogin(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	duration := 3600 * time.Second
+	duration := 1 * time.Hour
 	access_token, err := auth.MakeJWT(user.ID, cfg.authSecret, duration)
 	if err != nil {
 		respondWithError(rw, 401, "Incorrect email or password", err)
