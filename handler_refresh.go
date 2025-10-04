@@ -24,6 +24,11 @@ func (cfg *apiConfig) handlerRefresh(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	if db_token.RevokedAt.Valid {
+		respondWithError(rw, 401, "Unauthorized", err)
+		return
+	}
+
 	access_token, err := auth.MakeJWT(db_token.UserID, cfg.authSecret, 1*time.Hour)
 	if err != nil {
 		respondWithError(rw, 401, "Unauthorized", err)

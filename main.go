@@ -107,7 +107,11 @@ func (cfg *apiConfig) handlerReset(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	cfg.resetMetrics()
-	cfg.db.DeleteUsers(req.Context())
+	err := cfg.db.DeleteUsers(req.Context())
+	if err != nil {
+		respondWithError(rw, 500, "Reset failed", err)
+		return
+	}
 
 	rw.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	rw.WriteHeader(http.StatusOK)
