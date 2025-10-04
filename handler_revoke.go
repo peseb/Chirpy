@@ -19,5 +19,5 @@ func (cfg *apiConfig) handlerRevoke(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	respondWithJSON(rw, 403, nil)
+	respondWithJSON(rw, 204, nil)
 }
