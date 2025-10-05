@@ -66,6 +66,11 @@ func main() {
 	serveMux.HandleFunc("GET /api/healthz", handlerHealth)
 
 	/*
+		Webhooks
+	*/
+	serveMux.HandleFunc("POST /api/polka/webhooks", cfg.handlerPolkaWebhook)
+
+	/*
 		Users
 	*/
 	serveMux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
