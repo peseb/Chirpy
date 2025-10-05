@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/peseb/Chirpy/internal/auth"
 	"github.com/peseb/Chirpy/internal/database"
 )
 
@@ -13,6 +14,12 @@ type EventData struct {
 }
 
 func (cfg *apiConfig) handlerPolkaWebhook(rw http.ResponseWriter, req *http.Request) {
+	apiKey, err := auth.GetAPIKey(req.Header)
+	if err != nil || apiKey != cfg.polkaApiKey {
+		respondWithError(rw, 401, "Unauthorized", err)
+		return
+	}
+
 	type parameters struct {
 		Event string    `json:"event"`
 		Data  EventData `json:"data"`
@@ -20,7 +27,7 @@ func (cfg *apiConfig) handlerPolkaWebhook(rw http.ResponseWriter, req *http.Requ
 
 	decoder := json.NewDecoder(req.Body)
 	dto := parameters{}
-	err := decoder.Decode(&dto)
+	err = decoder.Decode(&dto)
 	if err != nil {
 		respondWithError(rw, 500, "Unable to decode DTO", err)
 		return

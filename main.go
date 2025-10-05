@@ -18,6 +18,7 @@ type apiConfig struct {
 	db             *database.Queries
 	platform       string
 	authSecret     string
+	polkaApiKey    string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -39,6 +40,7 @@ func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	authSecret := os.Getenv("AUTH_SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal("Unable to connect to database")
@@ -50,6 +52,7 @@ func main() {
 		db:             dbQueries,
 		platform:       "dev",
 		authSecret:     authSecret,
+		polkaApiKey:    polkaKey,
 	}
 
 	serveMux := http.NewServeMux()
